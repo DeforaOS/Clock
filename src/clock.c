@@ -218,6 +218,9 @@ static void _clock_on_apply(gpointer data)
 	tv.tv_usec = 0;
 	if(settimeofday(&tv, NULL) != 0)
 		_clock_error(clock, strerror(errno), 1);
+	else
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(clock->toggle),
+				FALSE);
 }
 
 
