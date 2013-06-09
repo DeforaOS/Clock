@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Date & time settings
+Name=Date & time
 Comment=Set the time and date
 Exec=clock
 Icon=appointment-soon
