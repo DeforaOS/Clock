@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Date & time settings
+Comment=Set the time and date
+Exec=clock
+Icon=appointment-soon
+Type=Application
+Categories=Settings;GTK;

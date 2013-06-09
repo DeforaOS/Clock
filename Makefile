@@ -1,6 +1,6 @@
 PACKAGE	= Clock
 VERSION	= 0.0.0
-SUBDIRS	= po src
+SUBDIRS	= data po src
 RM	= rm -f
 LN	= ln -f
 TAR	= tar -czvf
@@ -21,6 +21,9 @@ dist:
 	$(RM) -r -- $(PACKAGE)-$(VERSION)
 	$(LN) -s -- . $(PACKAGE)-$(VERSION)
 	@$(TAR) $(PACKAGE)-$(VERSION).tar.gz -- \
+		$(PACKAGE)-$(VERSION)/data/Makefile \
+		$(PACKAGE)-$(VERSION)/data/clock-settings.desktop \
+		$(PACKAGE)-$(VERSION)/data/project.conf \
 		$(PACKAGE)-$(VERSION)/po/Makefile \
 		$(PACKAGE)-$(VERSION)/po/gettext.sh \
 		$(PACKAGE)-$(VERSION)/po/POTFILES \
