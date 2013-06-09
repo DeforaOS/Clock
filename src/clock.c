@@ -16,6 +16,7 @@
 
 
 #include <sys/time.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <errno.h>
@@ -68,6 +69,7 @@ Clock * clock_new(void)
 	GtkWidget * vbox;
 	GtkWidget * hbox;
 	GtkWidget * widget;
+	char const * p;
 
 	if((clock = object_new(sizeof(*clock))) == NULL)
 		return NULL;
@@ -124,6 +126,17 @@ Clock * clock_new(void)
 	gtk_widget_set_sensitive(clock->second, FALSE);
 	gtk_box_pack_start(GTK_BOX(hbox), clock->second, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+	/* timezone */
+	if((p = getenv("TZ")) != NULL)
+	{
+		hbox = gtk_hbox_new(FALSE, 0);
+		widget = gtk_label_new(_("Timezone: "));
+		gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+		widget = gtk_label_new(p);
+		gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+		gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
+		gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+	}
 	/* button box */
 	hbox = gtk_hbutton_box_new();
 	gtk_box_set_spacing(GTK_BOX(hbox), 4);
