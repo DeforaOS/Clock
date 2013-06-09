@@ -73,7 +73,7 @@ Clock * clock_new(void)
 
 	if((clock = object_new(sizeof(*clock))) == NULL)
 		return NULL;
-	clock->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	clock->window = gtk_dialog_new();
 	gtk_window_set_default_size(GTK_WINDOW(clock->window), 200, 300);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_window_set_icon_name(GTK_WINDOW(clock->window), "appointment-soon");
@@ -84,7 +84,11 @@ Clock * clock_new(void)
 			_("Date and time settings"));
 	g_signal_connect_swapped(clock->window, "delete-event", G_CALLBACK(
 				_clock_on_window_closex), clock);
-	vbox = gtk_vbox_new(FALSE, 4);
+#if GTK_CHECK_VERSION(2, 14, 0)
+	vbox = gtk_dialog_get_content_area(GTK_DIALOG(clock->window));
+#else
+	vbox = GTK_DIALOG(clock->window)->vbox;
+#endif
 	/* toggle */
 	clock->toggle = gtk_check_button_new_with_mnemonic(
 			_("_Set the time and date:"));
@@ -143,9 +147,11 @@ Clock * clock_new(void)
 		gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	}
 	/* button box */
-	hbox = gtk_hbutton_box_new();
-	gtk_box_set_spacing(GTK_BOX(hbox), 4);
-	gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
+#if GTK_CHECK_VERSION(2, 14, 0)
+	hbox = gtk_dialog_get_action_area(GTK_DIALOG(clock->window));
+#else
+	hbox = GTK_DIALOG(clock->window)->action_area;
+#endif
 	clock->apply = gtk_button_new_from_stock(GTK_STOCK_APPLY);
 	gtk_widget_set_sensitive(clock->apply, FALSE);
 	g_signal_connect_swapped(clock->apply, "clicked", G_CALLBACK(
@@ -155,9 +161,6 @@ Clock * clock_new(void)
 	g_signal_connect_swapped(widget, "clicked", G_CALLBACK(_clock_on_close),
 			clock);
 	gtk_container_add(GTK_CONTAINER(hbox), widget);
-	gtk_box_pack_end(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
-	gtk_container_add(GTK_CONTAINER(clock->window), vbox);
-	gtk_container_set_border_width(GTK_CONTAINER(clock->window), 4);
 	clock->source = g_timeout_add(1000, _clock_on_timeout, clock);
 	_clock_on_timeout(clock);
 	gtk_widget_show_all(clock->window);
