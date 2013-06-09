@@ -16,7 +16,9 @@
 
 
 #include <sys/time.h>
+#include <string.h>
 #include <time.h>
+#include <errno.h>
 #include <libintl.h>
 #include <System.h>
 #include <gtk/gtk.h>
@@ -46,6 +48,9 @@ struct _Clock
 
 
 /* prototypes */
+/* useful */
+static int _clock_error(Clock * clock, char const * message, int ret);
+
 /* callbacks */
 static void _clock_on_apply(gpointer data);
 static void _clock_on_close(gpointer data);
@@ -154,11 +159,36 @@ void clock_delete(Clock * clock)
 
 /* private */
 /* functions */
+/* useful */
+/* clock_error */
+static int _clock_error(Clock * clock, char const * message, int ret)
+{
+	/* FIXME use a dialog box instead */
+	fprintf(stderr, "clock: %s\n", message);
+	return ret;
+}
+
+
 /* callbacks */
 /* clock_on_apply */
 static void _clock_on_apply(gpointer data)
 {
-	/* FIXME implement */
+	Clock * clock = data;
+	struct tm t;
+	struct timeval tv;
+
+	memset(&t, 0, sizeof(t));
+	t.tm_mday = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->day));
+	t.tm_mon = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->month)) - 1;
+	t.tm_year = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->year))
+		- 1900;
+	t.tm_hour = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->hour));
+	t.tm_min = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->minute));
+	t.tm_sec = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->second));
+	tv.tv_sec = mktime(&t);
+	tv.tv_usec = 0;
+	if(settimeofday(&tv, NULL) != 0)
+		_clock_error(clock, strerror(errno), 1);
 }
 
 
@@ -214,6 +244,8 @@ static void _clock_on_toggled(gpointer data)
 	gtk_widget_set_sensitive(clock->minute, sensitive);
 	gtk_widget_set_sensitive(clock->second, sensitive);
 	gtk_widget_set_sensitive(clock->apply, sensitive);
+	if(sensitive == FALSE)
+		_clock_on_timeout(clock);
 }
 
 
