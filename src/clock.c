@@ -75,6 +75,9 @@ Clock * clock_new(void)
 		return NULL;
 	clock->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size(GTK_WINDOW(clock->window), 200, 300);
+#if GTK_CHECK_VERSION(2, 6, 0)
+	gtk_window_set_icon_name(GTK_WINDOW(clock->window), "appointment-soon");
+#endif
 	gtk_window_set_title(GTK_WINDOW(clock->window),
 			_("Date and time settings"));
 	g_signal_connect_swapped(clock->window, "delete-event", G_CALLBACK(
