@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=Date & time
 Comment=Set the time and date
+TryExec=clock
 Exec=clock
 Icon=appointment-soon
 Type=Application
