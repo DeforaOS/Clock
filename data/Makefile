@@ -13,9 +13,9 @@ distclean: clean
 
 install:
 	$(MKDIR) $(DESTDIR)$(PREFIX)/share/applications
-	$(INSTALL) -m 0644 clock-settings.desktop $(DESTDIR)$(PREFIX)/share/applications/clock-settings.desktop
+	$(INSTALL) -m 0644 deforaos-clock-settings.desktop $(DESTDIR)$(PREFIX)/share/applications/deforaos-clock-settings.desktop
 
 uninstall:
-	$(RM) -- $(DESTDIR)$(PREFIX)/share/applications/clock-settings.desktop
+	$(RM) -- $(DESTDIR)$(PREFIX)/share/applications/deforaos-clock-settings.desktop
 
 .PHONY: all clean distclean install uninstall
