@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2013-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS Desktop Accessories */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,8 +78,7 @@ Clock * clock_new(void)
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_window_set_icon_name(GTK_WINDOW(clock->window), "appointment-soon");
 #endif
-	gtk_window_set_position(GTK_WINDOW(clock->window),
-			GTK_WIN_POS_CENTER_ALWAYS);
+	gtk_window_set_position(GTK_WINDOW(clock->window), GTK_WIN_POS_CENTER);
 	gtk_window_set_title(GTK_WINDOW(clock->window),
 			_("Date and time settings"));
 	g_signal_connect_swapped(clock->window, "delete-event", G_CALLBACK(
