@@ -37,13 +37,21 @@ struct _Clock
 
 	/* widgets */
 	GtkWidget * window;
-	GtkWidget * toggle;
-	GtkWidget * day;
-	GtkWidget * month;
-	GtkWidget * year;
-	GtkWidget * hour;
-	GtkWidget * minute;
-	GtkWidget * second;
+	/* alarms */
+	GtkListStore * al_store;
+	GtkWidget * al_view;
+	/* clock */
+	GtkWidget * cl_toggle;
+	GtkWidget * cl_day;
+	GtkWidget * cl_month;
+	GtkWidget * cl_year;
+	GtkWidget * cl_hour;
+	GtkWidget * cl_minute;
+	GtkWidget * cl_second;
+	/* timers */
+	GtkListStore * ti_store;
+	GtkWidget * ti_view;
+	/* actions */
 	GtkWidget * apply;
 };
 
@@ -63,13 +71,22 @@ static gboolean _clock_on_window_closex(gpointer data);
 /* public */
 /* functions */
 /* clock_new */
+static void _new_alarms(Clock * clock, GtkWidget * notebook);
+static void _new_alarms_on_new(gpointer data);
+static void _new_alarms_on_title_edited(GtkCellRendererText * renderer,
+		gchar * path, gchar * text, gpointer data);
+static void _new_date(Clock * clock, GtkWidget * notebook);
+static void _new_timers(Clock * clock, GtkWidget * notebook);
+static void _new_timers_on_new(gpointer data);
+static void _new_timers_on_title_edited(GtkCellRendererText * renderer,
+		gchar * path, gchar * text, gpointer data);
+
 Clock * clock_new(void)
 {
 	Clock * clock;
 	GtkWidget * vbox;
 	GtkWidget * hbox;
 	GtkWidget * widget;
-	char const * p;
 
 	if((clock = object_new(sizeof(*clock))) == NULL)
 		return NULL;
@@ -88,63 +105,12 @@ Clock * clock_new(void)
 #else
 	vbox = GTK_DIALOG(clock->window)->vbox;
 #endif
-	/* toggle */
-	clock->toggle = gtk_check_button_new_with_mnemonic(
-			_("_Set the time and date:"));
-	g_signal_connect_swapped(clock->toggle, "toggled", G_CALLBACK(
-				_clock_on_toggled), clock);
-	gtk_box_pack_start(GTK_BOX(vbox), clock->toggle, FALSE, TRUE, 0);
-	/* date */
-	hbox = gtk_hbox_new(FALSE, 4);
-	widget = gtk_label_new(_("Date: "));
-	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
-	/* day */
-	clock->day = gtk_spin_button_new_with_range(1.0, 31.0, 1.0);
-	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->day), 0);
-	gtk_widget_set_sensitive(clock->day, FALSE);
-	gtk_box_pack_start(GTK_BOX(hbox), clock->day, TRUE, TRUE, 0);
-	/* month */
-	clock->month = gtk_spin_button_new_with_range(1.0, 12.0, 1.0);
-	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->month), 0);
-	gtk_widget_set_sensitive(clock->month, FALSE);
-	gtk_box_pack_start(GTK_BOX(hbox), clock->month, TRUE, TRUE, 0);
-	/* year */
-	clock->year = gtk_spin_button_new_with_range(1970.0, 2038.0, 1.0);
-	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->year), 0);
-	gtk_widget_set_sensitive(clock->year, FALSE);
-	gtk_box_pack_start(GTK_BOX(hbox), clock->year, TRUE, TRUE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
-	/* time */
-	hbox = gtk_hbox_new(FALSE, 4);
-	widget = gtk_label_new(_("Time: "));
-	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
-	/* hour */
-	clock->hour = gtk_spin_button_new_with_range(0.0, 23.0, 1.0);
-	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->hour), 0);
-	gtk_widget_set_sensitive(clock->hour, FALSE);
-	gtk_box_pack_start(GTK_BOX(hbox), clock->hour, TRUE, TRUE, 0);
-	/* minutes */
-	clock->minute = gtk_spin_button_new_with_range(0.0, 59.0, 1.0);
-	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->minute), 0);
-	gtk_widget_set_sensitive(clock->minute, FALSE);
-	gtk_box_pack_start(GTK_BOX(hbox), clock->minute, TRUE, TRUE, 0);
-	/* seconds */
-	clock->second = gtk_spin_button_new_with_range(0.0, 61.0, 1.0);
-	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->second), 0);
-	gtk_widget_set_sensitive(clock->second, FALSE);
-	gtk_box_pack_start(GTK_BOX(hbox), clock->second, TRUE, TRUE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
-	/* timezone */
-	if((p = getenv("TZ")) != NULL)
-	{
-		hbox = gtk_hbox_new(FALSE, 0);
-		widget = gtk_label_new(_("Timezone: "));
-		gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
-		widget = gtk_label_new(p);
-		gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
-		gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
-		gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
-	}
+	/* notebook */
+	widget = gtk_notebook_new();
+	_new_date(clock, widget);
+	_new_alarms(clock, widget);
+	_new_timers(clock, widget);
+	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
 	/* button box */
 #if GTK_CHECK_VERSION(2, 14, 0)
 	hbox = gtk_dialog_get_action_area(GTK_DIALOG(clock->window));
@@ -164,6 +130,260 @@ Clock * clock_new(void)
 	_clock_on_timeout(clock);
 	gtk_widget_show_all(clock->window);
 	return clock;
+}
+
+static void _new_alarms(Clock * clock, GtkWidget * notebook)
+{
+	GtkWidget * vbox;
+	GtkWidget * widget;
+	GtkToolItem * toolitem;
+	GtkCellRenderer * renderer;
+	GtkTreeViewColumn * column;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
+	vbox = gtk_vbox_new(FALSE, 0);
+#endif
+	/* toolbar */
+	widget = gtk_toolbar_new();
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_NEW);
+	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
+				_new_alarms_on_new), clock);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_PASTE);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+	/* view */
+	widget = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
+			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	clock->al_store = gtk_list_store_new(3,
+			G_TYPE_BOOLEAN,		/* active */
+			G_TYPE_STRING,		/* title */
+			G_TYPE_STRING);		/* time */
+	clock->al_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
+				clock->al_store));
+	/* active */
+	renderer = gtk_cell_renderer_toggle_new();
+	/* FIXME toggle when clicked */
+	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
+			"active", 0, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->al_view), column);
+	/* title */
+	renderer = gtk_cell_renderer_text_new();
+	g_object_set(G_OBJECT(renderer), "editable", TRUE, NULL);
+	g_signal_connect(renderer, "edited", G_CALLBACK(
+				_new_alarms_on_title_edited), clock);
+	column = gtk_tree_view_column_new_with_attributes(_("Title"), renderer,
+			"text", 1, NULL);
+	gtk_tree_view_column_set_expand(column, TRUE);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->al_view), column);
+	/* time */
+	renderer = gtk_cell_renderer_text_new();
+	/* FIXME popup when editing */
+	column = gtk_tree_view_column_new_with_attributes(_("Time"), renderer,
+			"text", 2, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->al_view), column);
+	gtk_container_add(GTK_CONTAINER(widget), clock->al_view);
+	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox,
+			gtk_label_new(_("Alarms")));
+}
+
+static void _new_alarms_on_new(gpointer data)
+{
+	Clock * clock = data;
+	GtkTreeIter iter;
+
+	gtk_list_store_append(clock->al_store, &iter);
+}
+
+static void _new_alarms_on_title_edited(GtkCellRendererText * renderer,
+		gchar * path, gchar * text, gpointer data)
+{
+	Clock * clock = data;
+	GtkTreeModel * model = GTK_TREE_MODEL(clock->al_store);
+	GtkTreeIter iter;
+
+	if(gtk_tree_model_get_iter_from_string(model, &iter, path) != TRUE)
+		return;
+	gtk_list_store_set(clock->al_store, &iter, 1, text, -1);
+}
+
+static void _new_date(Clock * clock, GtkWidget * notebook)
+{
+	GtkWidget * vbox;
+	GtkWidget * hbox;
+	GtkWidget * widget;
+	char const * p;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+#else
+	vbox = gtk_vbox_new(FALSE, 4);
+#endif
+	/* toggle */
+	clock->cl_toggle = gtk_check_button_new_with_mnemonic(
+			_("_Set the time and date:"));
+	g_signal_connect_swapped(clock->cl_toggle, "toggled", G_CALLBACK(
+				_clock_on_toggled), clock);
+	gtk_box_pack_start(GTK_BOX(vbox), clock->cl_toggle, FALSE, TRUE, 0);
+	/* date */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
+	hbox = gtk_hbox_new(FALSE, 4);
+#endif
+	widget = gtk_label_new(_("Date: "));
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+	/* day */
+	clock->cl_day = gtk_spin_button_new_with_range(1.0, 31.0, 1.0);
+	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->cl_day), 0);
+	gtk_widget_set_sensitive(clock->cl_day, FALSE);
+	gtk_box_pack_start(GTK_BOX(hbox), clock->cl_day, TRUE, TRUE, 0);
+	/* month */
+	clock->cl_month = gtk_spin_button_new_with_range(1.0, 12.0, 1.0);
+	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->cl_month), 0);
+	gtk_widget_set_sensitive(clock->cl_month, FALSE);
+	gtk_box_pack_start(GTK_BOX(hbox), clock->cl_month, TRUE, TRUE, 0);
+	/* year */
+	clock->cl_year = gtk_spin_button_new_with_range(1970.0, 2038.0, 1.0);
+	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->cl_year), 0);
+	gtk_widget_set_sensitive(clock->cl_year, FALSE);
+	gtk_box_pack_start(GTK_BOX(hbox), clock->cl_year, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+	/* time */
+	hbox = gtk_hbox_new(FALSE, 4);
+	widget = gtk_label_new(_("Time: "));
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+	/* hour */
+	clock->cl_hour = gtk_spin_button_new_with_range(0.0, 23.0, 1.0);
+	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->cl_hour), 0);
+	gtk_widget_set_sensitive(clock->cl_hour, FALSE);
+	gtk_box_pack_start(GTK_BOX(hbox), clock->cl_hour, TRUE, TRUE, 0);
+	/* minutes */
+	clock->cl_minute = gtk_spin_button_new_with_range(0.0, 59.0, 1.0);
+	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->cl_minute), 0);
+	gtk_widget_set_sensitive(clock->cl_minute, FALSE);
+	gtk_box_pack_start(GTK_BOX(hbox), clock->cl_minute, TRUE, TRUE, 0);
+	/* seconds */
+	clock->cl_second = gtk_spin_button_new_with_range(0.0, 61.0, 1.0);
+	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(clock->cl_second), 0);
+	gtk_widget_set_sensitive(clock->cl_second, FALSE);
+	gtk_box_pack_start(GTK_BOX(hbox), clock->cl_second, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+	/* timezone */
+	if((p = getenv("TZ")) != NULL)
+	{
+		hbox = gtk_hbox_new(FALSE, 0);
+		widget = gtk_label_new(_("Timezone: "));
+		gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+		/* FIXME make it an editable combo box (with drop-down list) */
+		widget = gtk_label_new(p);
+		gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+		gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 0);
+		gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+	}
+	/* automatic update */
+	/* FIXME add a button to start ntpdate? */
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox,
+			gtk_label_new(_("Clock")));
+}
+
+static void _new_timers(Clock * clock, GtkWidget * notebook)
+{
+	GtkWidget * vbox;
+	GtkWidget * widget;
+	GtkToolItem * toolitem;
+	GtkCellRenderer * renderer;
+	GtkTreeViewColumn * column;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#else
+	vbox = gtk_vbox_new(FALSE, 0);
+#endif
+	/* toolbar */
+	widget = gtk_toolbar_new();
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_NEW);
+	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
+				_new_timers_on_new), clock);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_PASTE);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_separator_tool_item_new();
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
+	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
+	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
+	/* view */
+	widget = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
+			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	clock->ti_store = gtk_list_store_new(3,
+			G_TYPE_BOOLEAN,		/* active */
+			G_TYPE_STRING,		/* title */
+			G_TYPE_STRING);		/* time */
+	clock->ti_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
+				clock->ti_store));
+	/* active */
+	renderer = gtk_cell_renderer_toggle_new();
+	/* FIXME toggle when clicked */
+	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
+			"active", 0, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->ti_view), column);
+	/* title */
+	renderer = gtk_cell_renderer_text_new();
+	g_object_set(G_OBJECT(renderer), "editable", TRUE, NULL);
+	g_signal_connect(renderer, "edited", G_CALLBACK(
+				_new_timers_on_title_edited), clock);
+	column = gtk_tree_view_column_new_with_attributes(_("Title"), renderer,
+			"text", 1, NULL);
+	gtk_tree_view_column_set_expand(column, TRUE);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->ti_view), column);
+	/* duration */
+	renderer = gtk_cell_renderer_text_new();
+	/* FIXME popup when editing */
+	column = gtk_tree_view_column_new_with_attributes(_("Duration"),
+			renderer, "text", 2, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->ti_view), column);
+	gtk_container_add(GTK_CONTAINER(widget), clock->ti_view);
+	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox,
+			gtk_label_new(_("Timers")));
+}
+
+static void _new_timers_on_new(gpointer data)
+{
+	Clock * clock = data;
+	GtkTreeIter iter;
+
+	gtk_list_store_append(clock->ti_store, &iter);
+}
+
+static void _new_timers_on_title_edited(GtkCellRendererText * renderer,
+		gchar * path, gchar * text, gpointer data)
+{
+	Clock * clock = data;
+	GtkTreeModel * model = GTK_TREE_MODEL(clock->ti_store);
+	GtkTreeIter iter;
+
+	if(gtk_tree_model_get_iter_from_string(model, &iter, path) != TRUE)
+		return;
+	gtk_list_store_set(clock->ti_store, &iter, 1, text, -1);
 }
 
 
@@ -209,19 +429,20 @@ static void _clock_on_apply(gpointer data)
 	struct timeval tv;
 
 	memset(&t, 0, sizeof(t));
-	t.tm_mday = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->day));
-	t.tm_mon = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->month)) - 1;
-	t.tm_year = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->year))
+	t.tm_mday = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->cl_day));
+	t.tm_mon = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->cl_month))
+		- 1;
+	t.tm_year = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->cl_year))
 		- 1900;
-	t.tm_hour = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->hour));
-	t.tm_min = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->minute));
-	t.tm_sec = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->second));
+	t.tm_hour = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->cl_hour));
+	t.tm_min = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->cl_minute));
+	t.tm_sec = gtk_spin_button_get_value(GTK_SPIN_BUTTON(clock->cl_second));
 	tv.tv_sec = mktime(&t);
 	tv.tv_usec = 0;
 	if(settimeofday(&tv, NULL) != 0)
 		_clock_error(clock, strerror(errno), 1);
 	else
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(clock->toggle),
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(clock->cl_toggle),
 				FALSE);
 }
 
@@ -244,21 +465,22 @@ static gboolean _clock_on_timeout(gpointer data)
 	struct tm t;
 
 	/* do not update if the time is being set */
-	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(clock->toggle)))
+	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(clock->cl_toggle)))
 		return TRUE;
 	if(gettimeofday(&tv, NULL) != 0
 			|| localtime_r(&tv.tv_sec, &t) == NULL)
 		/* XXX report error */
 		return TRUE;
 	/* date */
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->day), t.tm_mday);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->month), t.tm_mon + 1);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->year),
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->cl_day), t.tm_mday);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->cl_month),
+			t.tm_mon + 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->cl_year),
 			t.tm_year + 1900);
 	/* time */
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->hour), t.tm_hour);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->minute), t.tm_min);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->second), t.tm_sec);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->cl_hour), t.tm_hour);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->cl_minute), t.tm_min);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(clock->cl_second), t.tm_sec);
 	return TRUE;
 }
 
@@ -270,13 +492,13 @@ static void _clock_on_toggled(gpointer data)
 	gboolean sensitive;
 
 	sensitive = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(
-				clock->toggle));
-	gtk_widget_set_sensitive(clock->day, sensitive);
-	gtk_widget_set_sensitive(clock->month, sensitive);
-	gtk_widget_set_sensitive(clock->year, sensitive);
-	gtk_widget_set_sensitive(clock->hour, sensitive);
-	gtk_widget_set_sensitive(clock->minute, sensitive);
-	gtk_widget_set_sensitive(clock->second, sensitive);
+				clock->cl_toggle));
+	gtk_widget_set_sensitive(clock->cl_day, sensitive);
+	gtk_widget_set_sensitive(clock->cl_month, sensitive);
+	gtk_widget_set_sensitive(clock->cl_year, sensitive);
+	gtk_widget_set_sensitive(clock->cl_hour, sensitive);
+	gtk_widget_set_sensitive(clock->cl_minute, sensitive);
+	gtk_widget_set_sensitive(clock->cl_second, sensitive);
 	gtk_widget_set_sensitive(clock->apply, sensitive);
 	if(sensitive == FALSE)
 		_clock_on_timeout(clock);
