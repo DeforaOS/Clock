@@ -55,6 +55,24 @@ struct _Clock
 	GtkWidget * apply;
 };
 
+typedef enum _ClockAlarmColumn
+{
+	CAC_ACTIVE = 0,
+	CAC_TITLE,
+	CAC_TIME
+} ClockAlarmColumn;
+#define CAC_LAST CAC_TIME
+#define CAC_COUNT (CAC_LAST + 1)
+
+typedef enum _ClockTimerColumn
+{
+	CTC_ACTIVE = 0,
+	CTC_TITLE,
+	CTC_TIME
+} ClockTimerColumn;
+#define CTC_LAST CTC_TIME
+#define CTC_COUNT (CTC_LAST + 1)
+
 
 /* prototypes */
 /* useful */
@@ -166,17 +184,17 @@ static void _new_alarms(Clock * clock, GtkWidget * notebook)
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	clock->al_store = gtk_list_store_new(3,
-			G_TYPE_BOOLEAN,		/* active */
-			G_TYPE_STRING,		/* title */
-			G_TYPE_STRING);		/* time */
+	clock->al_store = gtk_list_store_new(CAC_COUNT,
+			G_TYPE_BOOLEAN,		/* CAC_ACTIVE */
+			G_TYPE_STRING,		/* CAC_TITLE */
+			G_TYPE_STRING);		/* CAC_TIME */
 	clock->al_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				clock->al_store));
 	/* active */
 	renderer = gtk_cell_renderer_toggle_new();
 	/* FIXME toggle when clicked */
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
-			"active", 0, NULL);
+			"active", CAC_ACTIVE, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->al_view), column);
 	/* title */
 	renderer = gtk_cell_renderer_text_new();
@@ -184,14 +202,14 @@ static void _new_alarms(Clock * clock, GtkWidget * notebook)
 	g_signal_connect(renderer, "edited", G_CALLBACK(
 				_new_alarms_on_title_edited), clock);
 	column = gtk_tree_view_column_new_with_attributes(_("Title"), renderer,
-			"text", 1, NULL);
+			"text", CAC_TITLE, NULL);
 	gtk_tree_view_column_set_expand(column, TRUE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->al_view), column);
 	/* time */
 	renderer = gtk_cell_renderer_text_new();
 	/* FIXME popup when editing */
 	column = gtk_tree_view_column_new_with_attributes(_("Time"), renderer,
-			"text", 2, NULL);
+			"text", CAC_TIME, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->al_view), column);
 	gtk_container_add(GTK_CONTAINER(widget), clock->al_view);
 	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
@@ -205,7 +223,8 @@ static void _new_alarms_on_new(gpointer data)
 	GtkTreeIter iter;
 
 	gtk_list_store_append(clock->al_store, &iter);
-	gtk_list_store_set(clock->al_store, &iter, 0, FALSE, 1, _("Alarm"), -1);
+	gtk_list_store_set(clock->al_store, &iter, CAC_ACTIVE, FALSE,
+			CAC_TITLE, _("Alarm"), -1);
 }
 
 static void _new_alarms_on_title_edited(GtkCellRendererText * renderer,
@@ -217,7 +236,7 @@ static void _new_alarms_on_title_edited(GtkCellRendererText * renderer,
 
 	if(gtk_tree_model_get_iter_from_string(model, &iter, path) != TRUE)
 		return;
-	gtk_list_store_set(clock->al_store, &iter, 1, text, -1);
+	gtk_list_store_set(clock->al_store, &iter, CAC_TITLE, text, -1);
 }
 
 static void _new_date(Clock * clock, GtkWidget * notebook)
@@ -334,17 +353,17 @@ static void _new_timers(Clock * clock, GtkWidget * notebook)
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	clock->ti_store = gtk_list_store_new(3,
-			G_TYPE_BOOLEAN,		/* active */
-			G_TYPE_STRING,		/* title */
-			G_TYPE_STRING);		/* time */
+	clock->ti_store = gtk_list_store_new(CTC_COUNT,
+			G_TYPE_BOOLEAN,		/* CTC_ACTIVE */
+			G_TYPE_STRING,		/* CTC_TITLE */
+			G_TYPE_STRING);		/* CTC_TIME */
 	clock->ti_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(
 				clock->ti_store));
 	/* active */
 	renderer = gtk_cell_renderer_toggle_new();
 	/* FIXME toggle when clicked */
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
-			"active", 0, NULL);
+			"active", CTC_ACTIVE, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->ti_view), column);
 	/* title */
 	renderer = gtk_cell_renderer_text_new();
@@ -352,14 +371,14 @@ static void _new_timers(Clock * clock, GtkWidget * notebook)
 	g_signal_connect(renderer, "edited", G_CALLBACK(
 				_new_timers_on_title_edited), clock);
 	column = gtk_tree_view_column_new_with_attributes(_("Title"), renderer,
-			"text", 1, NULL);
+			"text", CTC_TITLE, NULL);
 	gtk_tree_view_column_set_expand(column, TRUE);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->ti_view), column);
 	/* duration */
 	renderer = gtk_cell_renderer_text_new();
 	/* FIXME popup when editing */
 	column = gtk_tree_view_column_new_with_attributes(_("Duration"),
-			renderer, "text", 2, NULL);
+			renderer, "text", CTC_TIME, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->ti_view), column);
 	gtk_container_add(GTK_CONTAINER(widget), clock->ti_view);
 	gtk_box_pack_start(GTK_BOX(vbox), widget, TRUE, TRUE, 0);
@@ -373,7 +392,8 @@ static void _new_timers_on_new(gpointer data)
 	GtkTreeIter iter;
 
 	gtk_list_store_append(clock->ti_store, &iter);
-	gtk_list_store_set(clock->ti_store, &iter, 0, FALSE, 1, _("Timer"), -1);
+	gtk_list_store_set(clock->ti_store, &iter, CTC_ACTIVE, FALSE,
+			CTC_TITLE, _("Timer"), -1);
 }
 
 static void _new_timers_on_title_edited(GtkCellRendererText * renderer,
@@ -385,7 +405,7 @@ static void _new_timers_on_title_edited(GtkCellRendererText * renderer,
 
 	if(gtk_tree_model_get_iter_from_string(model, &iter, path) != TRUE)
 		return;
-	gtk_list_store_set(clock->ti_store, &iter, 1, text, -1);
+	gtk_list_store_set(clock->ti_store, &iter, CTC_TITLE, text, -1);
 }
 
 
