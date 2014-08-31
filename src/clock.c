@@ -205,6 +205,7 @@ static void _new_alarms_on_new(gpointer data)
 	GtkTreeIter iter;
 
 	gtk_list_store_append(clock->al_store, &iter);
+	gtk_list_store_set(clock->al_store, &iter, 0, FALSE, 1, _("Alarm"), -1);
 }
 
 static void _new_alarms_on_title_edited(GtkCellRendererText * renderer,
@@ -372,6 +373,7 @@ static void _new_timers_on_new(gpointer data)
 	GtkTreeIter iter;
 
 	gtk_list_store_append(clock->ti_store, &iter);
+	gtk_list_store_set(clock->ti_store, &iter, 0, FALSE, 1, _("Timer"), -1);
 }
 
 static void _new_timers_on_title_edited(GtkCellRendererText * renderer,
