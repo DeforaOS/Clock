@@ -17,6 +17,7 @@ fr.mo: Clock.pot fr.po
 
 clean:
 	$(RM) -- $(Clock.pot_OBJS) $(fr.mo_OBJS)
+	./gettext.sh -c -P "$(PREFIX)" -- "Clock.pot"
 	./gettext.sh -c -P "$(PREFIX)" -- "fr.mo"
 
 distclean: clean
