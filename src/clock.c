@@ -85,6 +85,14 @@ static gboolean _clock_on_timeout(gpointer data);
 static void _clock_on_toggled(gpointer data);
 static gboolean _clock_on_window_closex(gpointer data);
 
+/* alarm */
+static void _clock_on_alarm_toggled(GtkCellRendererToggle * renderer,
+		char * path, gpointer data);
+
+/* timer */
+static void _clock_on_timer_toggled(GtkCellRendererToggle * renderer,
+		char * path, gpointer data);
+
 
 /* public */
 /* functions */
@@ -192,7 +200,8 @@ static void _new_alarms(Clock * clock, GtkWidget * notebook)
 				clock->al_store));
 	/* active */
 	renderer = gtk_cell_renderer_toggle_new();
-	/* FIXME toggle when clicked */
+	g_signal_connect(renderer, "toggled", G_CALLBACK(
+				_clock_on_alarm_toggled), clock);
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
 			"active", CAC_ACTIVE, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->al_view), column);
@@ -361,7 +370,8 @@ static void _new_timers(Clock * clock, GtkWidget * notebook)
 				clock->ti_store));
 	/* active */
 	renderer = gtk_cell_renderer_toggle_new();
-	/* FIXME toggle when clicked */
+	g_signal_connect(renderer, "toggled", G_CALLBACK(
+				_clock_on_timer_toggled), clock);
 	column = gtk_tree_view_column_new_with_attributes(NULL, renderer,
 			"active", CTC_ACTIVE, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(clock->ti_view), column);
@@ -535,4 +545,35 @@ static gboolean _clock_on_window_closex(gpointer data)
 	gtk_widget_hide(clock->window);
 	gtk_main_quit();
 	return TRUE;
+}
+
+
+/* alarm */
+/* clock_on_alarm_toggled */
+static void _clock_on_alarm_toggled(GtkCellRendererToggle * renderer,
+		char * path, gpointer data)
+{
+	Clock * clock = data;
+	GtkTreeIter iter;
+
+	gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(clock->al_store),
+			&iter, path);
+	gtk_list_store_set(clock->al_store, &iter, CAC_ACTIVE,
+			!gtk_cell_renderer_toggle_get_active(renderer), -1);
+	/* FIXME really implement */
+}
+
+
+/* timer */
+static void _clock_on_timer_toggled(GtkCellRendererToggle * renderer,
+		char * path, gpointer data)
+{
+	Clock * clock = data;
+	GtkTreeIter iter;
+
+	gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(clock->ti_store),
+			&iter, path);
+	gtk_list_store_set(clock->ti_store, &iter, CTC_ACTIVE,
+			!gtk_cell_renderer_toggle_get_active(renderer), -1);
+	/* FIXME really implement */
 }
