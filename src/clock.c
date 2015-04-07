@@ -86,10 +86,12 @@ static void _clock_on_toggled(gpointer data);
 static gboolean _clock_on_window_closex(gpointer data);
 
 /* alarm */
+static void _clock_on_alarm_delete(gpointer data);
 static void _clock_on_alarm_toggled(GtkCellRendererToggle * renderer,
 		char * path, gpointer data);
 
 /* timer */
+static void _clock_on_timer_delete(gpointer data);
 static void _clock_on_timer_toggled(GtkCellRendererToggle * renderer,
 		char * path, gpointer data);
 
@@ -186,6 +188,8 @@ static void _new_alarms(Clock * clock, GtkWidget * notebook)
 	toolitem = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
+	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
+				_clock_on_alarm_delete), clock);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 	/* view */
@@ -356,6 +360,8 @@ static void _new_timers(Clock * clock, GtkWidget * notebook)
 	toolitem = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
+	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
+				_clock_on_timer_delete), clock);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, TRUE, 0);
 	/* view */
@@ -549,6 +555,44 @@ static gboolean _clock_on_window_closex(gpointer data)
 
 
 /* alarm */
+/* clock_on_alarm_delete */
+static void _clock_on_alarm_delete(gpointer data)
+{
+	Clock * clock = data;
+	GtkTreeSelection * treesel;
+	GList * rows;
+	GList * s;
+	GtkTreeModel * model;
+	GtkTreePath * path;
+	GtkTreeIter iter;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(clock->al_view));
+	if((rows = gtk_tree_selection_get_selected_rows(treesel, &model))
+			== NULL)
+		return;
+	for(s = rows; s != NULL; s = s->next)
+	{
+		if((path = s->data) == NULL)
+			continue;
+		s->data = gtk_tree_row_reference_new(model, path);
+		gtk_tree_path_free(path);
+	}
+	for(s = rows; s != NULL; s = s->next)
+	{
+		if(s->data == NULL)
+			continue;
+		if((path = gtk_tree_row_reference_get_path(s->data)) == NULL)
+			continue;
+		gtk_tree_model_get_iter(model, &iter, path);
+		gtk_tree_path_free(path);
+		/* FIXME really implement */
+		gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
+	}
+	g_list_foreach(rows, (GFunc)gtk_tree_row_reference_free, NULL);
+	g_list_free(rows);
+}
+
+
 /* clock_on_alarm_toggled */
 static void _clock_on_alarm_toggled(GtkCellRendererToggle * renderer,
 		char * path, gpointer data)
@@ -565,6 +609,45 @@ static void _clock_on_alarm_toggled(GtkCellRendererToggle * renderer,
 
 
 /* timer */
+/* clock_on_timer_delete */
+static void _clock_on_timer_delete(gpointer data)
+{
+	Clock * clock = data;
+	GtkTreeSelection * treesel;
+	GList * rows;
+	GList * s;
+	GtkTreeModel * model;
+	GtkTreePath * path;
+	GtkTreeIter iter;
+
+	treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(clock->ti_view));
+	if((rows = gtk_tree_selection_get_selected_rows(treesel, &model))
+			== NULL)
+		return;
+	for(s = rows; s != NULL; s = s->next)
+	{
+		if((path = s->data) == NULL)
+			continue;
+		s->data = gtk_tree_row_reference_new(model, path);
+		gtk_tree_path_free(path);
+	}
+	for(s = rows; s != NULL; s = s->next)
+	{
+		if(s->data == NULL)
+			continue;
+		if((path = gtk_tree_row_reference_get_path(s->data)) == NULL)
+			continue;
+		gtk_tree_model_get_iter(model, &iter, path);
+		gtk_tree_path_free(path);
+		/* FIXME really implement */
+		gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
+	}
+	g_list_foreach(rows, (GFunc)gtk_tree_row_reference_free, NULL);
+	g_list_free(rows);
+}
+
+
+/* clock_on_timer_toggled */
 static void _clock_on_timer_toggled(GtkCellRendererToggle * renderer,
 		char * path, gpointer data)
 {
