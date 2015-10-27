@@ -295,7 +295,11 @@ static void _new_date(Clock * clock, GtkWidget * notebook)
 	gtk_box_pack_start(GTK_BOX(hbox), clock->cl_year, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
 	/* time */
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
 	hbox = gtk_hbox_new(FALSE, 4);
+#endif
 	widget = gtk_label_new(_("Time: "));
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	/* hour */
@@ -317,7 +321,11 @@ static void _new_date(Clock * clock, GtkWidget * notebook)
 	/* timezone */
 	if((p = getenv("TZ")) != NULL)
 	{
+#if GTK_CHECK_VERSION(3, 0, 0)
+		hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#else
 		hbox = gtk_hbox_new(FALSE, 0);
+#endif
 		widget = gtk_label_new(_("Timezone: "));
 		gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 		/* FIXME make it an editable combo box (with drop-down list) */
