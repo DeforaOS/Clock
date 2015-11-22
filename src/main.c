@@ -82,7 +82,7 @@ int main(int argc, char * argv[])
 	if(optind != argc)
 		return _usage();
 	if((clock = clock_new()) == NULL)
-		return _error(error_get(), 2);
+		return _error(error_get(NULL), 2);
 	gtk_main();
 	clock_delete(clock);
 	return 0;
