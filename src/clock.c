@@ -175,19 +175,23 @@ static void _new_alarms(Clock * clock, GtkWidget * notebook)
 #endif
 	/* toolbar */
 	widget = gtk_toolbar_new();
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_NEW);
+	toolitem = gtk_tool_button_new(NULL, _("New alarm"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), "gtk-new");
 	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
 				_new_alarms_on_new), clock);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	toolitem = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
+	toolitem = gtk_tool_button_new(NULL, _("Copy"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), "gtk-copy");
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_PASTE);
+	toolitem = gtk_tool_button_new(NULL, _("Paste"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), "gtk-paste");
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	toolitem = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
+	toolitem = gtk_tool_button_new(NULL, _("Delete"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), "gtk-delete");
 	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
 				_clock_on_alarm_delete), clock);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
@@ -246,6 +250,7 @@ static void _new_alarms_on_title_edited(GtkCellRendererText * renderer,
 	Clock * clock = data;
 	GtkTreeModel * model = GTK_TREE_MODEL(clock->al_store);
 	GtkTreeIter iter;
+	(void) renderer;
 
 	if(gtk_tree_model_get_iter_from_string(model, &iter, path) != TRUE)
 		return;
@@ -359,19 +364,23 @@ static void _new_timers(Clock * clock, GtkWidget * notebook)
 #endif
 	/* toolbar */
 	widget = gtk_toolbar_new();
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_NEW);
+	toolitem = gtk_tool_button_new(NULL, _("New timer"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), "gtk-new");
 	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
 				_new_timers_on_new), clock);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	toolitem = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_COPY);
+	toolitem = gtk_tool_button_new(NULL, _("Copy"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), "gtk-copy");
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_PASTE);
+	toolitem = gtk_tool_button_new(NULL, _("Paste"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), "gtk-paste");
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
 	toolitem = gtk_separator_tool_item_new();
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
-	toolitem = gtk_tool_button_new_from_stock(GTK_STOCK_DELETE);
+	toolitem = gtk_tool_button_new(NULL, _("Delete"));
+	gtk_tool_button_set_icon_name(GTK_TOOL_BUTTON(toolitem), "gtk-delete");
 	g_signal_connect_swapped(toolitem, "clicked", G_CALLBACK(
 				_clock_on_timer_delete), clock);
 	gtk_toolbar_insert(GTK_TOOLBAR(widget), toolitem, -1);
@@ -430,6 +439,7 @@ static void _new_timers_on_title_edited(GtkCellRendererText * renderer,
 	Clock * clock = data;
 	GtkTreeModel * model = GTK_TREE_MODEL(clock->ti_store);
 	GtkTreeIter iter;
+	(void) renderer;
 
 	if(gtk_tree_model_get_iter_from_string(model, &iter, path) != TRUE)
 		return;
