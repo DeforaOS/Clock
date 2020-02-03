@@ -7,39 +7,73 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Clock 0.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-06-09 19:15+0200\n"
+"POT-Creation-Date: 2020-02-03 06:35+0100\n"
 "PO-Revision-Date: 2013-06-09 03:38+0200\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: French\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: ../src/clock.c:82
+#: ../src/clock.c:128
 msgid "Date and time settings"
 msgstr "Paramètres date et heure"
 
-#: ../src/clock.c:88
+#: ../src/clock.c:217 ../src/clock.c:401
+msgid "Title"
+msgstr "Titre"
+
+#: ../src/clock.c:224
+msgid "Time"
+msgstr "Heure"
+
+#: ../src/clock.c:230
+msgid "Alarms"
+msgstr "Alarmes"
+
+#: ../src/clock.c:240
+msgid "Alarm"
+msgstr "Alarme"
+
+#: ../src/clock.c:269
 msgid "_Set the time and date:"
 msgstr "_Paramétrer la date et l'heure :"
 
-#: ../src/clock.c:94
+#: ../src/clock.c:279
 msgid "Date: "
 msgstr "Date : "
 
-#: ../src/clock.c:114
+#: ../src/clock.c:303
 msgid "Time: "
 msgstr "Heure : "
 
-#: ../src/clock.c:136
+#: ../src/clock.c:329
 msgid "Timezone: "
 msgstr "Fuseau horaire : "
 
-#: ../src/clock.c:188 ../src/clock.c:192
+#: ../src/clock.c:344
+msgid "Clock"
+msgstr "Horloge"
+
+#: ../src/clock.c:408
+msgid "Duration"
+msgstr "DurÃ©e"
+
+#: ../src/clock.c:414
+msgid "Timers"
+msgstr "Comptes Ã  rebours"
+
+#: ../src/clock.c:424
+msgid "Timer"
+msgstr "Compte Ã  rebours"
+
+#: ../src/clock.c:462 ../src/clock.c:466
 msgid "Error"
 msgstr "Erreur"
 
-#: ../src/main.c:58
-msgid "Usage: clock\n"
-msgstr "Usage: clock\n"
+#: ../src/main.c:61
+#, c-format
+msgid "Usage: %s\n"
+msgstr "Usage: %s\n"
